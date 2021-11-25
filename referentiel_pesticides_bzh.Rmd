@@ -1,0 +1,223 @@
+---
+title: "Référentiel des substances actives phytosanitaires"
+output: html_notebook
+params:
+  agritox_url: 'https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664'
+  ephy_url: 'https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959'
+  data_folder: 'data'
+---
+
+
+
+```{r setup}
+library(tidyverse)
+
+# Fonction d'import d'un dataset à partir d'un fichier ZIP téléchargeable
+import_dataset <- function(url,name, pattern){
+  
+# URL stable du jeu de données Agritox
+folder <- paste0(params$data_folder,"/",name)
+file <- paste0(params$data_folder,"/",name,"/",name,".zip")
+if (!dir.exists(folder)) {dir.create(folder)}
+download.file(url, file, mode='wb')
+# unzip
+  unzip(zipfile = file, exdir=folder)#%>%
+  #copy extracted file to destination directory
+  #file.copy(paste0(params$data_folder,"/",name), overwrite=TRUE)
+  
+files <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = TRUE)
+
+list <- files %>%
+  purrr::map(~read.csv(.x, sep=";"))
+
+names(list) <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = FALSE) %>%
+  str_remove(".csv")%>%
+  tolower()
+
+list%>%
+  return()
+}
+```
+## AGRITOX
+
+https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/
+
+URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664)
+
+1. IDENTITÉ DE LA SUBSTANCE
+Une substance active est caractérisée par son nom commun (proposé par l’industriel), par son nom chimique (ici selon le standard IUPAC), par son numéro CAS et EC, par sa formule brute, par sa masse molaire, par sa pureté minimale et par la présence ou non d’impureté dite pertinente.
+
+Nom chimique
+Le nom chimique d’une substance active selon le standard IUPAC est le nom décrit en français d'après les règles les plus récentes de l'IUPAC (Union Internationale de Chimie Pure et Appliquée).
+
+Numéro CAS
+Le numéro CAS (CAS number ou CAS registry number en anglais) d'une substance chimique est son numéro d'enregistrement unique auprès de la banque de données de Chemical Abstracts Service (CAS).
+
+Numéro EC
+Le numéro EC, se rapportant à la législation Européenne, permet d'identifier une substance chimique répertoriée dans l'Inventaire Européen des Substances chimiques Commerciales Existantes (EINECS).
+
+Pureté minimale
+La pureté minimale est la teneur minimale d’une substance active exprimée en % ou g/kg.
+
+Formule brute
+La formule brute est l'écriture la plus compacte décrivant une substance. Les substances sont décrites d'abord comme des hydrates de carbone : C, H ; puis les substituants sont comptabilisés par ordre alphabétique : Cl, F, N, O.
+
+Impureté pertinente
+Une impureté dite pertinente est une impureté présentant un danger toxicologique, écotoxicologique et/ou environnemental supérieur à celui engendré par la substance active.
+
+2. PROPRIÉTÉS PHYSIQUES ET CHIMIQUES
+Pression de vapeur
+La pression de vapeur caractérise l'aptitude d'une substance active à se volatiliser. Elle est exprimée en Pascal (Pa), autrefois en millimètres de mercure (101325 Pa = 1 atmosphère = 760 mm Hg). La température est exprimée en degrés Celsius.
+
+Constante de Henry
+La constante de Henry caractérise l'aptitude d'une substance active en solution à se volatiliser. Elle s'exprime en Pascal / m3 / mol. La température accompagne cette donnée.
+
+Solubilité dans l’eau
+La solubilité d'une substance dans l'eau est sa concentration de saturation dans l'eau à une température donnée. La solubilité dans l’eau est exprimée :
+
+par une valeur numérique (en g/L ou mg/L) dans l'unité la plus adéquate.
+ou bien par une appréciation qualitative choisie dans une gamme hiérarchisée (de insoluble à miscible),
+Coefficient de partage octanol/eau
+P est le coefficient de partage octanol/eau. C'est une grandeur sans dimension, définie à une température et à un pH donnés. On peut aussi l'appeler Kow. Il est souvent exprimé en logarithme décimal.
+Log P est un indicateur de liposolubilité d'une substance.
+
+pKa
+La constante de dissociation (pKa) est la constante de réaction associée à la dissociation d'un composé chimique.
+
+3. TOXICITE AIGUË
+Toxicité aiguë par voie orale
+Pour une espèce donnée, la DL50 orale est la Dose Létale (mortelle) en substance active, pour 50 % d'un lot d'animaux de laboratoire soumis au test après une administration unique par voie orale de la substance active.
+La DL50 est exprimée en milligrammes de substance active par kilogramme de poids corporel de l'animal testé (mg/kg pc).
+
+Toxicité aiguë par voie cutanée
+Pour une espèce donnée, la DL50 dermique est la Dose Létale (mortelle) en substance active, pour 50% d'un lot d'animaux de laboratoire soumis au test après une application unique sur la peau de la substance active.
+La DL50 est exprimée en milligrammes de substance active par kilogramme de poids corporel de l'animal testé (mg/kg pc).
+
+Toxicité aiguë par inhalation
+Pour une espèce donnée, la CL50 est la Concentration Létale (mortelle) en substance active, pour 50% d'un lot d'animaux de laboratoire soumis au test après 4 heures d'exposition dans l'air inhalé.
+Le rat est l'espèce recommandée.
+La CL50 est exprimée en milligrammes de substance active par litre d'air (mg/L).
+
+VALEURS TOXICOLOGIQUES DE REFERENCE
+Dose journalière acceptable : DJA (ou ADI)
+La DJA est également connue sous le terme anglais d’ADI ou Admissible Daily Intake.
+
+La dose journalière acceptable désigne la quantité de substance qui peut être quotidiennement ingérée par le consommateur, pendant toute la vie, sans effet néfaste pour sa santé.
+Elle s'exprime le plus souvent en milligrammes de substance active par kilogrammes de poids corporel et par jour (mg/kg pc/j).
+Elle est calculée á partir d'une dose sans effet néfaste ou NOAEL (No Observed Adverse Effect Level) et d'un facteur de sécurité (FS).
+La NOAEL choisie pour le calcul est issue de l'étude la plus appropriée sur une espèce animale sensible et représentative. Le facteur de sécurité tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance.
+
+La DJA est fixée par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
+
+Dose de référence aiguë : DRfA ou (ARfD)
+Elle est plus connue sous le terme anglais (ARfD) : Acute Reference Dose.
+
+La dose de référence aigüe désigne la quantité maximum de substance active qui peut être ingérée par le consommateur pendant une courte période (c'est à dire au cours d'un repas ou d'un jour, dans la nourriture ou l'eau de boisson), sans effet dangereux pour sa santé.
+Elle s'exprime le plus souvent en milligrammes de substance active par kilogramme de poids corporel (mg/kg pc).
+Elle est calculée à partir d'une dose sans effet néfaste ou NOAEL (No Observed Adverse Effect Level) et d'un facteur de sécurité (FS). La NOAEL choisie pour le calcul est issue de l'étude la plus appropriée sur une espèce animale sensible et représentative. Le facteur de sécurité tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance.
+
+L'ARfD est fixée par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
+
+Niveau d’exposition acceptable pour l’opérateur, les personnes présentes, le travailleur et les résidents : AOEL
+Il est plus connu sous le terme anglais AOEL : Acceptable Operator Exposure Level.
+
+Il désigne la valeur de référence par rapport à laquelle les expositions non alimentaires aux produits phytopharmaceutiques sont actuellement évaluées .
+Il vise à définir un niveau d'exposition quotidienne tout au long d'une saison de pulvérisation, année après année, en dessous duquel aucun effet systémique néfaste sur la santé ne serait attendu. L’AOEL est normalement obtenu en appliquant un facteur de sécurité (le plus souvent 100, ce facteur tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance) à une dose sans effet adverse observé ou (NOAEL, (No Observed Adverse Effect Level)) et corrigé le cas échéant par un facteur de correction pour tenir compte d'une absorption orale incomplète. La NOAEL provient d'une étude toxicologique au cours de laquelle des animaux ont été exposés quotidiennement pendant 90 jours ou plus. La NOAEL critique peut également provenir d'une étude avec une période de dosage plus courte (par exemple, une étude sur le développement).
+Il est exprimé le plus souvent en milligrammes de substance active par kilogrammes de poids corporel et par jour (mg/kg pc/j).
+
+L'AOEL est fixé par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
+
+Niveau d’exposition aigu acceptable pour l’opérateur, les personnes présentes, le travailleur et les résidents : AAOEL
+Il est plus connu sous le terme anglais AAOEL : Acute Acceptable Operator Exposure Level.
+
+Il désigne la valeur de référence par rapport à laquelle les expositions aiguës non alimentaires (c'est-à-dire celles qui pourraient être encourues en une seule journée) sont évaluées1. Cela ne s'applique aux produits phytopharmaceutiques pour lesquels de telles expositions pourraient produire une toxicité significative.
+Il est calculé á partir d'une dose sans effet néfaste NOAEL (No Observed Adverse Effect), d'un facteur de sécurité (FS) et corrigée le cas échéant par un facteur de correction pour tenir compte d'une absorption orale incomplète. La NOAEL choisie pour le calcul est issue de l'étude la plus appropriée sur une espèce animale sensible et représentative. Le facteur de sécurité tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance.
+
+Il est exprimé le plus souvent en milligrammes de substance active par kilogrammes de poids corporel (mg/kg pc).
+
+L'AAOEL est fixé par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
+
+Pour en savoir plus sur les conclusions de l’évaluation des substances actives par l’EFSA :
+http://www.efsa.europa.eu/fr/topics/topic/pesticides
+
+5. ÉCOTOXICITÉ
+Concentration sans effet prévisible pour les organismes aquatiques : PNEC
+La Concentration sans Effet Prévisible (PNEC, Predicted Non Effect Concentration en anglais) est la valeur toxique de référence utilisée pour évaluer les risques pour les organismes aquatiques.
+La PNEC désigne la concentration pour, ou en-dessous, de laquelle il n'est pas attendu d'effet inacceptable sur l'ensemble des organismes aquatiques.
+
+La PNEC est déterminée en prenant en compte l'ensemble des données de toxicité sur les organismes aquatiques issues du dossier européen de la substance active et de ses métabolites, et des dossiers d’Autorisation de Mise sur le Marché (AMM) ; elle couvre les effets potentiels de la substance active et de ses métabolites pertinents pour l’évaluation du risque pour les organismes aquatiques. Elle est exprimée en µg par litre, ou en µg par kg de sédiment.
+
+Lorsque la PNEC est définie sur la base d'études standards, elle est calculée à partir des données de toxicité aigüe (CL50 ou CE50 pour les poissons et invertébrés aquatiques, respectivement), à court terme (CE50 pour les algues et les plantes) ou à long terme (CSEO pour les poissons et invertébrés aquatiques) sur différents groupes taxonomiques et d'un facteur de sécurité (FS) de 100 (étude de toxicité aigüe) et de 10 (étude de toxicité à court terme et à long terme). Le facteur de sécurité permet de tenir compte de la variabilité intra et inter espèces.
+
+Si la PNEC est basée sur des études de niveau supérieur (microcosmes, mésocosmes), la valeur du facteur de sécurité approprié est déterminée selon la qualité de l'information fournie et la nature des effets (2 à 4).
+
+• La CL50 est la Concentration Létale pour 50% des organismes exposés, les poissons ainsi que quelques invertébrés aquatiques.
+
+• La CE50 est la Concentration d'Effet pour 50% des organismes exposés, les daphnies et quelques autres invertébrés aquatiques, les algues et les plantes aquatiques. Pour les invertébrés, l'effet est l'immobilisation. Pour les algues et plantes, sont mesurés les effets sur la biomasse (b), le taux de croissance (r) ou la densité de fronde (df) (exemple : CEr50).
+
+• La CSEO est la Concentration Sans Effet Observé pour la totalité des organismes exposés (NOEC en anglais).
+
+• En cas d'évaluation probabiliste, une HC5 (Hazard Concentration) est déterminée : c'est la concentration limite pour laquelle 5% des organismes sont affectés (exemple de critère : 5% des organismes ont une CL50 inférieure à la HC5). Un facteur de sécurité (FS) approprié prenant en compte les recommandations du document guide aquatique est appliqué à cette valeur de HC5.
+
+• Pour un microcosme ou un mésocosme, plusieurs valeurs de toxicité finale peuvent être déterminées, en particulier :
+o CSEO ou NOEC
+o NOEAEC (concentration sans effet écologique néfaste observé).
+
+• L’EAC (Ecologically Acceptable Concentration) est définie en considérant l'ensemble des études sur les organismes aquatiques. Elle est comparable à la PNEC.
+
+La concentration est le plus souvent exprimée en mg ou µg d'item de test par litre d'eau, parfois en mg ou µg d'item de test par kg de sédiment.
+
+Pour en savoir plus sur les conclusions de l’évaluation des substances actives par l’EFSA :
+http://www.efsa.europa.eu/fr/topics/topic/pesticides
+
+6. CLASSEMENT
+Le classement et l'étiquetage harmonisés sont proposés par l’ECHA lors de l’évaluation par les paires et publiés au Journal officiel de l’Union européenne (adaptations au Règlement européen (CE) N° 1272/2008
+Le règlement (CE) N°1272/2008 (ou CLP) reprend en partie les éléments (étiquetage et critères) du système de classification international : le système général harmonisé (GHS). Il remplace l’ancien système de classification pour les substances actives (remplacement de la directive 67/548/CEE).
+Pour en savoir plus : le site de l’ECHA sur la classification des substances et des mélanges.
+https://echa.europa.eu/fr/regulations/clp/classification
+
+LEXIQUE
+AAOEL : Niveau d'exposition aigu acceptable
+AO : Absorption orale
+AOEL : Niveau d'exposition acceptable
+ARfD : Dose de référence aiguë
+CL50 : Concentration létale 50%
+DJA : Dose journalière acceptable
+DL50 : Dose létale 50%
+F : Femelle
+M : Mâle
+MF : Mâle et femelle
+VO : Voie orale
+
+```{r import agritox}
+agritox <- import_dataset(url=params$agritox_url, name="agritox", pattern="*.csv")
+```
+
+## EPHY
+
+URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959)
+
+- La liste des produits autorisés ou retirés avec leurs AMM et leurs types de classification. (Fichiers : produits_ … .csv)
+- La liste des usages des produits (hors MFSC). Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). Le tableau contient les produits autorisés et retirés. (Fichiers : produits_usages_ … .csv)
+- La liste des usages des produits (hors MFSC) autorisés. Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). Le tableau contient uniquement les produits autorisés, mais informe sur tous les usages autorisés ou retirés de ce produit. (Fichiers : usages_des_produits_autorises_ … .csv)
+- La liste des phrases de risque des produits. (Fichiers : produits_phrases_de_risque_ … .csv)
+- La liste des substances actives. (Fichiers : substance_active_ … .csv)
+- La liste des conditions d’emploi des produits. Il existe une ligne par conditions d’emploi et produit. Un même produit se retrouve donc sur plusieurs lignes (une par conditions d’emploi du produit). (Fichiers produits_condition_emploi_ … .csv)
+- La liste des classes et des mentions danger des produits (hors MFSC). Il existe une ligne par classes – mentions dangers et produit. Un même produit se retrouve donc sur plusieurs lignes. (Fichiers produits_classe_et_mention_danger_ … .csv)
+- La liste des usages des MFSC et produits mixtes. Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). (Fichiers mfsc_et_mixte_usage_ … .csv)
+- La liste des compositions des MFSC et produits mixtes. (Fichiers mfsc_et_mixte_composition_ … .csv)
+
+```{r import EPHY}
+
+ephy <- import_dataset(url=params$ephy_url, name="ephy", pattern="*_utf8.csv")
+
+```
+```{r}
+library(rvest)
+
+page <- read_html('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
+
+# find all nodes with a class of "listing_row_price"
+listings <- html_nodes(page, css = '.listing_row_price')
+```
+
