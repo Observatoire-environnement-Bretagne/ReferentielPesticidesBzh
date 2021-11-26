@@ -4,6 +4,7 @@ output: html_notebook
 params:
   agritox_url: 'https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664'
   ephy_url: 'https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959'
+  siris_url: 'https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fsiris-pesticides.ineris.fr%2Fsiris_base_xls%2Fsiris_2012.xls&wdOrigin=BROWSELINK'
   data_folder: 'data'
 ---
 
@@ -13,184 +14,70 @@ params:
 library(tidyverse)
 
 # Fonction d'import d'un dataset à partir d'un fichier ZIP téléchargeable
-import_dataset <- function(url,name, pattern){
+import_dataset <- function(url, name, format){
   
-# URL stable du jeu de données Agritox
-folder <- paste0(params$data_folder,"/",name)
-file <- paste0(params$data_folder,"/",name,"/",name,".zip")
-if (!dir.exists(folder)) {dir.create(folder)}
-download.file(url, file, mode='wb')
-# unzip
-  unzip(zipfile = file, exdir=folder)#%>%
-  #copy extracted file to destination directory
-  #file.copy(paste0(params$data_folder,"/",name), overwrite=TRUE)
-  
-files <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = TRUE)
+  # URL stable du jeu de données Agritox
+  folder <- paste0(params$data_folder,"/",name)
+  file <- paste0(params$data_folder,"/",name,"/",name,".",format)
+  if (!dir.exists(folder)) {dir.create(folder)}
+  download.file(url, file, mode='wb')
+  # unzip
+  if(format == "zip"){
+    unzip(zipfile = file, exdir=folder)#%>%
+    #copy extracted file to destination directory
+    #file.copy(paste0(params$data_folder,"/",name), overwrite=TRUE)
+  }
+}
 
-list <- files %>%
+# Fonction de lecture des métadonnées du jeu de données depuis la page data.gouv
+metadonnees_dataset <- function(url){
+page <- rvest::read_html('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
+
+if (grepl('data.gouv.fr/fr/datasets/', url, fixed = TRUE)){
+
+metadonnee <- page %>% 
+  rvest::html_elements(".ressources .description-list div dd")%>% 
+  rvest::html_text2()%>%t()
+
+colnames(metadonnee) <- page %>% 
+  rvest::html_elements(".ressources .description-list div dt") %>% 
+  rvest::html_text2()%>%make.names()
+}
+
+metadonnee%>%as.tibble()
+}
+
+# Fonction de lecture d'un dataset importé et dézippé dans son dossier data/nom_du_dataset
+load_dataset <- function(url, name, pattern = "*.csv"){
+  
+list <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = TRUE) %>%
   purrr::map(~read.csv(.x, sep=";"))
 
 names(list) <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = FALSE) %>%
   str_remove(".csv")%>%
   tolower()
 
+list$mise_a_jour<- metadonnees_dataset(url)%>%
+  select(Modifiée.le)%>% 
+  as.character() %>% 
+  as.Date("%d %B %Y")
+
 list%>%
   return()
 }
+
+
 ```
 ## AGRITOX
 
-https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/
+Fiche du catalogue : https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/
 
 URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664)
 
-1. IDENTITÉ DE LA SUBSTANCE
-Une substance active est caractérisée par son nom commun (proposé par l’industriel), par son nom chimique (ici selon le standard IUPAC), par son numéro CAS et EC, par sa formule brute, par sa masse molaire, par sa pureté minimale et par la présence ou non d’impureté dite pertinente.
-
-Nom chimique
-Le nom chimique d’une substance active selon le standard IUPAC est le nom décrit en français d'après les règles les plus récentes de l'IUPAC (Union Internationale de Chimie Pure et Appliquée).
-
-Numéro CAS
-Le numéro CAS (CAS number ou CAS registry number en anglais) d'une substance chimique est son numéro d'enregistrement unique auprès de la banque de données de Chemical Abstracts Service (CAS).
-
-Numéro EC
-Le numéro EC, se rapportant à la législation Européenne, permet d'identifier une substance chimique répertoriée dans l'Inventaire Européen des Substances chimiques Commerciales Existantes (EINECS).
-
-Pureté minimale
-La pureté minimale est la teneur minimale d’une substance active exprimée en % ou g/kg.
-
-Formule brute
-La formule brute est l'écriture la plus compacte décrivant une substance. Les substances sont décrites d'abord comme des hydrates de carbone : C, H ; puis les substituants sont comptabilisés par ordre alphabétique : Cl, F, N, O.
-
-Impureté pertinente
-Une impureté dite pertinente est une impureté présentant un danger toxicologique, écotoxicologique et/ou environnemental supérieur à celui engendré par la substance active.
-
-2. PROPRIÉTÉS PHYSIQUES ET CHIMIQUES
-Pression de vapeur
-La pression de vapeur caractérise l'aptitude d'une substance active à se volatiliser. Elle est exprimée en Pascal (Pa), autrefois en millimètres de mercure (101325 Pa = 1 atmosphère = 760 mm Hg). La température est exprimée en degrés Celsius.
-
-Constante de Henry
-La constante de Henry caractérise l'aptitude d'une substance active en solution à se volatiliser. Elle s'exprime en Pascal / m3 / mol. La température accompagne cette donnée.
-
-Solubilité dans l’eau
-La solubilité d'une substance dans l'eau est sa concentration de saturation dans l'eau à une température donnée. La solubilité dans l’eau est exprimée :
-
-par une valeur numérique (en g/L ou mg/L) dans l'unité la plus adéquate.
-ou bien par une appréciation qualitative choisie dans une gamme hiérarchisée (de insoluble à miscible),
-Coefficient de partage octanol/eau
-P est le coefficient de partage octanol/eau. C'est une grandeur sans dimension, définie à une température et à un pH donnés. On peut aussi l'appeler Kow. Il est souvent exprimé en logarithme décimal.
-Log P est un indicateur de liposolubilité d'une substance.
-
-pKa
-La constante de dissociation (pKa) est la constante de réaction associée à la dissociation d'un composé chimique.
-
-3. TOXICITE AIGUË
-Toxicité aiguë par voie orale
-Pour une espèce donnée, la DL50 orale est la Dose Létale (mortelle) en substance active, pour 50 % d'un lot d'animaux de laboratoire soumis au test après une administration unique par voie orale de la substance active.
-La DL50 est exprimée en milligrammes de substance active par kilogramme de poids corporel de l'animal testé (mg/kg pc).
-
-Toxicité aiguë par voie cutanée
-Pour une espèce donnée, la DL50 dermique est la Dose Létale (mortelle) en substance active, pour 50% d'un lot d'animaux de laboratoire soumis au test après une application unique sur la peau de la substance active.
-La DL50 est exprimée en milligrammes de substance active par kilogramme de poids corporel de l'animal testé (mg/kg pc).
-
-Toxicité aiguë par inhalation
-Pour une espèce donnée, la CL50 est la Concentration Létale (mortelle) en substance active, pour 50% d'un lot d'animaux de laboratoire soumis au test après 4 heures d'exposition dans l'air inhalé.
-Le rat est l'espèce recommandée.
-La CL50 est exprimée en milligrammes de substance active par litre d'air (mg/L).
-
-VALEURS TOXICOLOGIQUES DE REFERENCE
-Dose journalière acceptable : DJA (ou ADI)
-La DJA est également connue sous le terme anglais d’ADI ou Admissible Daily Intake.
-
-La dose journalière acceptable désigne la quantité de substance qui peut être quotidiennement ingérée par le consommateur, pendant toute la vie, sans effet néfaste pour sa santé.
-Elle s'exprime le plus souvent en milligrammes de substance active par kilogrammes de poids corporel et par jour (mg/kg pc/j).
-Elle est calculée á partir d'une dose sans effet néfaste ou NOAEL (No Observed Adverse Effect Level) et d'un facteur de sécurité (FS).
-La NOAEL choisie pour le calcul est issue de l'étude la plus appropriée sur une espèce animale sensible et représentative. Le facteur de sécurité tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance.
-
-La DJA est fixée par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
-
-Dose de référence aiguë : DRfA ou (ARfD)
-Elle est plus connue sous le terme anglais (ARfD) : Acute Reference Dose.
-
-La dose de référence aigüe désigne la quantité maximum de substance active qui peut être ingérée par le consommateur pendant une courte période (c'est à dire au cours d'un repas ou d'un jour, dans la nourriture ou l'eau de boisson), sans effet dangereux pour sa santé.
-Elle s'exprime le plus souvent en milligrammes de substance active par kilogramme de poids corporel (mg/kg pc).
-Elle est calculée à partir d'une dose sans effet néfaste ou NOAEL (No Observed Adverse Effect Level) et d'un facteur de sécurité (FS). La NOAEL choisie pour le calcul est issue de l'étude la plus appropriée sur une espèce animale sensible et représentative. Le facteur de sécurité tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance.
-
-L'ARfD est fixée par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
-
-Niveau d’exposition acceptable pour l’opérateur, les personnes présentes, le travailleur et les résidents : AOEL
-Il est plus connu sous le terme anglais AOEL : Acceptable Operator Exposure Level.
-
-Il désigne la valeur de référence par rapport à laquelle les expositions non alimentaires aux produits phytopharmaceutiques sont actuellement évaluées .
-Il vise à définir un niveau d'exposition quotidienne tout au long d'une saison de pulvérisation, année après année, en dessous duquel aucun effet systémique néfaste sur la santé ne serait attendu. L’AOEL est normalement obtenu en appliquant un facteur de sécurité (le plus souvent 100, ce facteur tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance) à une dose sans effet adverse observé ou (NOAEL, (No Observed Adverse Effect Level)) et corrigé le cas échéant par un facteur de correction pour tenir compte d'une absorption orale incomplète. La NOAEL provient d'une étude toxicologique au cours de laquelle des animaux ont été exposés quotidiennement pendant 90 jours ou plus. La NOAEL critique peut également provenir d'une étude avec une période de dosage plus courte (par exemple, une étude sur le développement).
-Il est exprimé le plus souvent en milligrammes de substance active par kilogrammes de poids corporel et par jour (mg/kg pc/j).
-
-L'AOEL est fixé par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
-
-Niveau d’exposition aigu acceptable pour l’opérateur, les personnes présentes, le travailleur et les résidents : AAOEL
-Il est plus connu sous le terme anglais AAOEL : Acute Acceptable Operator Exposure Level.
-
-Il désigne la valeur de référence par rapport à laquelle les expositions aiguës non alimentaires (c'est-à-dire celles qui pourraient être encourues en une seule journée) sont évaluées1. Cela ne s'applique aux produits phytopharmaceutiques pour lesquels de telles expositions pourraient produire une toxicité significative.
-Il est calculé á partir d'une dose sans effet néfaste NOAEL (No Observed Adverse Effect), d'un facteur de sécurité (FS) et corrigée le cas échéant par un facteur de correction pour tenir compte d'une absorption orale incomplète. La NOAEL choisie pour le calcul est issue de l'étude la plus appropriée sur une espèce animale sensible et représentative. Le facteur de sécurité tient compte de la variabilité intra et inter-espèce et de la nature des effets de la substance.
-
-Il est exprimé le plus souvent en milligrammes de substance active par kilogrammes de poids corporel (mg/kg pc).
-
-L'AAOEL est fixé par l’EFSA lors de l’évaluation par les paires et applicable après approbation ou renouvellement d’approbation de la substance.
-
-Pour en savoir plus sur les conclusions de l’évaluation des substances actives par l’EFSA :
-http://www.efsa.europa.eu/fr/topics/topic/pesticides
-
-5. ÉCOTOXICITÉ
-Concentration sans effet prévisible pour les organismes aquatiques : PNEC
-La Concentration sans Effet Prévisible (PNEC, Predicted Non Effect Concentration en anglais) est la valeur toxique de référence utilisée pour évaluer les risques pour les organismes aquatiques.
-La PNEC désigne la concentration pour, ou en-dessous, de laquelle il n'est pas attendu d'effet inacceptable sur l'ensemble des organismes aquatiques.
-
-La PNEC est déterminée en prenant en compte l'ensemble des données de toxicité sur les organismes aquatiques issues du dossier européen de la substance active et de ses métabolites, et des dossiers d’Autorisation de Mise sur le Marché (AMM) ; elle couvre les effets potentiels de la substance active et de ses métabolites pertinents pour l’évaluation du risque pour les organismes aquatiques. Elle est exprimée en µg par litre, ou en µg par kg de sédiment.
-
-Lorsque la PNEC est définie sur la base d'études standards, elle est calculée à partir des données de toxicité aigüe (CL50 ou CE50 pour les poissons et invertébrés aquatiques, respectivement), à court terme (CE50 pour les algues et les plantes) ou à long terme (CSEO pour les poissons et invertébrés aquatiques) sur différents groupes taxonomiques et d'un facteur de sécurité (FS) de 100 (étude de toxicité aigüe) et de 10 (étude de toxicité à court terme et à long terme). Le facteur de sécurité permet de tenir compte de la variabilité intra et inter espèces.
-
-Si la PNEC est basée sur des études de niveau supérieur (microcosmes, mésocosmes), la valeur du facteur de sécurité approprié est déterminée selon la qualité de l'information fournie et la nature des effets (2 à 4).
-
-• La CL50 est la Concentration Létale pour 50% des organismes exposés, les poissons ainsi que quelques invertébrés aquatiques.
-
-• La CE50 est la Concentration d'Effet pour 50% des organismes exposés, les daphnies et quelques autres invertébrés aquatiques, les algues et les plantes aquatiques. Pour les invertébrés, l'effet est l'immobilisation. Pour les algues et plantes, sont mesurés les effets sur la biomasse (b), le taux de croissance (r) ou la densité de fronde (df) (exemple : CEr50).
-
-• La CSEO est la Concentration Sans Effet Observé pour la totalité des organismes exposés (NOEC en anglais).
-
-• En cas d'évaluation probabiliste, une HC5 (Hazard Concentration) est déterminée : c'est la concentration limite pour laquelle 5% des organismes sont affectés (exemple de critère : 5% des organismes ont une CL50 inférieure à la HC5). Un facteur de sécurité (FS) approprié prenant en compte les recommandations du document guide aquatique est appliqué à cette valeur de HC5.
-
-• Pour un microcosme ou un mésocosme, plusieurs valeurs de toxicité finale peuvent être déterminées, en particulier :
-o CSEO ou NOEC
-o NOEAEC (concentration sans effet écologique néfaste observé).
-
-• L’EAC (Ecologically Acceptable Concentration) est définie en considérant l'ensemble des études sur les organismes aquatiques. Elle est comparable à la PNEC.
-
-La concentration est le plus souvent exprimée en mg ou µg d'item de test par litre d'eau, parfois en mg ou µg d'item de test par kg de sédiment.
-
-Pour en savoir plus sur les conclusions de l’évaluation des substances actives par l’EFSA :
-http://www.efsa.europa.eu/fr/topics/topic/pesticides
-
-6. CLASSEMENT
-Le classement et l'étiquetage harmonisés sont proposés par l’ECHA lors de l’évaluation par les paires et publiés au Journal officiel de l’Union européenne (adaptations au Règlement européen (CE) N° 1272/2008
-Le règlement (CE) N°1272/2008 (ou CLP) reprend en partie les éléments (étiquetage et critères) du système de classification international : le système général harmonisé (GHS). Il remplace l’ancien système de classification pour les substances actives (remplacement de la directive 67/548/CEE).
-Pour en savoir plus : le site de l’ECHA sur la classification des substances et des mélanges.
-https://echa.europa.eu/fr/regulations/clp/classification
-
-LEXIQUE
-AAOEL : Niveau d'exposition aigu acceptable
-AO : Absorption orale
-AOEL : Niveau d'exposition acceptable
-ARfD : Dose de référence aiguë
-CL50 : Concentration létale 50%
-DJA : Dose journalière acceptable
-DL50 : Dose létale 50%
-F : Femelle
-M : Mâle
-MF : Mâle et femelle
-VO : Voie orale
-
 ```{r import agritox}
-agritox <- import_dataset(url=params$agritox_url, name="agritox", pattern="*.csv")
+import_dataset(url=params$agritox_url, name="agritox", format="zip")
+
+agritox <- load_dataset(url=params$agritox_url, name="agritox", pattern="*.csv")
 ```
 
 ## EPHY
@@ -209,15 +96,87 @@ URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98f7cac6
 
 ```{r import EPHY}
 
-ephy <- import_dataset(url=params$ephy_url, name="ephy", pattern="*_utf8.csv")
+import_dataset(url=params$ephy_url, name="ephy", format="zip")
+
+ephy <- load_dataset(url=params$ephy_url, name="ephy", pattern="*_utf8.csv")
 
 ```
-```{r}
-library(rvest)
+`r metadonnees_dataset(params$ephy_url)%>%select(Modifiée.le)%>%as.character()`
 
-page <- read_html('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
+## SIRIS
 
-# find all nodes with a class of "listing_row_price"
-listings <- html_nodes(page, css = '.listing_row_price')
+```{r import siris}
+# Le téléchargement du fichier excel ne marche pas
+#import_dataset(url=params$siris_url, name="siris", format = "xls")
+
+siris <- readxl::read_xls(paste0(params$data_folder,"/siris/siris.xls"), skip=5)
+names(siris) <- make.names(names(siris))
+siris$mise_a_jour <- as.Date("31/06/2012")
+```
+
+# Formatage des jeux de données sur un schema commun
+
+## Substances actives
+
+```{r format_agritox}
+sa_agritox <- agritox$agritox_identite %>%
+  left_join(select(agritox$agritox_ecotoxicite, Numéro.CAS, Valeur.PNEC), by = c("N..CAS" = "Numéro.CAS")) %>%
+  as.tibble() %>% 
+  select(
+    SA_CodeCAS = N..CAS,
+    SA_Libelle = NOM.SA,
+    SA_PNEC = Valeur.PNEC
+  )%>%
+  mutate(source = "AGRITOX",
+         mise_a_jour = agritox$mise_a_jour)
+
+sa_agritox
+```
+
+```{r format_ephy}
+sa_ephy <- ephy$substance_active_v3_utf8 %>%
+  as.tibble() %>% 
+  select(
+    SA_CodeCAS = Numero.CAS,
+    SA_Libelle = Nom.substance.active,
+    SA_Statut = Etat.dâ..autorisation
+  )%>%
+  mutate(source = "EPHY",
+         mise_a_jour = ephy$mise_a_jour)
+
+sa_ephy
+```
+# Union des jeux de données
+
+## Substances actives
+
+```{r union_substances_actives}
+union_substances_actives <- sa_agritox %>%
+  bind_rows(sa_ephy)
+
+union_substances_actives
+```
+# Correction des données 
+
+```{r substances_actives_corrigees}
+union_substances_actives_corrigees <- union_substances_actives %>% 
+  mutate(SA_CodeCAS = case_when(SA_CodeCAS == "87392-12-9 (S-isomer) 178961-20-1 (R-isomer)" ~ "87392-12-9",
+                                TRUE ~ SA_CodeCAS))
+
+union_substances_actives_corrigees
+```
+
+```{r lecture union_substances_actives}
+union_substances_actives_corrigees %>% 
+  filter(SA_CodeCAS == "87392-12-9")
+# Le CodeCAS n'est pas unique par ligne du référentiel EPHY
+```
+
+# Export des référentiels
+
+```{r write_substances_actives}
+if (!dir.exists('data/referentiel')) {dir.create('data/referentiel')}
+
+write.csv(union_substances_actives_corrigees, file=paste(params$data_folder,'referentiel',"union_substances_actives.csv", sep="/"))
 ```
 
