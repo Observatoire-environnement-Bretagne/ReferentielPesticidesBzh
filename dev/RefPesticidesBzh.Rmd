@@ -1,5 +1,5 @@
 ---
-title: "Référentiel des substances actives phytosanitaires"
+title: "Référentiel des substances actives pesticides"
 output: html_notebook
 params:
   agritox_url: 'https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664'
@@ -17,8 +17,8 @@ library(tidyverse)
 import_dataset <- function(url, name, format){
   
   # URL stable du jeu de données Agritox
-  folder <- paste0(params$data_folder,"/",name)
-  file <- paste0(params$data_folder,"/",name,"/",name,".",format)
+  folder <- paste0('data',"/",name)
+  file <- paste0('data',"/",name,"/",name,".",format)
   if (!dir.exists(folder)) {dir.create(folder)}
   download.file(url, file, mode='wb')
   # unzip
@@ -31,7 +31,7 @@ import_dataset <- function(url, name, format){
 
 # Fonction de lecture des métadonnées du jeu de données depuis la page data.gouv
 metadonnees_dataset <- function(url){
-page <- rvest::read_html('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
+page <- rvest::read_html(url)
 
 if (grepl('data.gouv.fr/fr/datasets/', url, fixed = TRUE)){
 
@@ -83,6 +83,7 @@ agritox <- load_dataset(url=params$agritox_url, name="agritox", pattern="*.csv")
 ## EPHY
 
 URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959)
+--> Remplacer par le jeu de données XML : (https://www.data.gouv.fr/fr/datasets/r/cdbc887b-265e-4338-9509-5e9958df1a48)
 
 - La liste des produits autorisés ou retirés avec leurs AMM et leurs types de classification. (Fichiers : produits_ … .csv)
 - La liste des usages des produits (hors MFSC). Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). Le tableau contient les produits autorisés et retirés. (Fichiers : produits_usages_ … .csv)
