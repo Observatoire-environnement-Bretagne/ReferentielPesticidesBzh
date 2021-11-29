@@ -1,0 +1,29 @@
+#' Metadonnées du dataset
+#'
+#' @param url char url de la fiche data.gouv.fr
+#'
+#' @return
+#' tibble des métadonnées du jeu de données
+#' @export
+#'
+#' @examples
+# Fonction de lecture des métadonnées du jeu de données depuis la page data.gouv.fr
+
+#' metadonnees_dataset('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
+metadonnees_dataset <- function(url){
+
+  page <- rvest::read_html(url)
+
+if (grepl('data.gouv.fr/fr/datasets/', url, fixed = TRUE)){
+
+metadonnee <- page %>% 
+  rvest::html_elements(".ressources .description-list div dd")%>% 
+  rvest::html_text2()%>%t()
+
+colnames(metadonnee) <- page %>% 
+  rvest::html_elements(".ressources .description-list div dt") %>% 
+  rvest::html_text2()%>%make.names()
+}
+
+metadonnee%>%as.tibble()
+}

@@ -1,0 +1,4 @@
+test_that("my_median works properly and show error if needed", {
+  expect_true(TRUE)
+  expect_error(mean(ert))
+})

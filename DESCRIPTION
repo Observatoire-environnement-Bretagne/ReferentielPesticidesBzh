@@ -1,0 +1,27 @@
+Package: RefPesticidesBzh
+Title: Référentiel Régional Sur Les Substances Actives Pesticides
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Timothée", "Besse", , "timothee.besse@bretagne-environnement.fr", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-1565-9313")),
+    person("Observatoire de l'Environnement en Bretagne", role = "cph")
+  )
+Description: Ce package permet d'actualiser et d'exploiter un référentiel
+    des substances actives pesticides à partir des informations obtenues à
+    partir de plusieurs référentiels nationaux, notamment AGRITOX, EPHY.
+    Il inclut les corrections et compléments apportés par le groupe de
+    travail régional animé par l'Observatoire de l'Environnement en
+    Bretagne.
+License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
+    license
+Imports: 
+    rvest
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: 
+    knitr
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
