@@ -14,8 +14,9 @@ Description: Ce package permet d'actualiser et d'exploiter un référentiel
     Bretagne.
 License: MIT + file LICENSE
 Imports: 
+    magrittr,
     rvest,
-    tidyverse
+    tibble
 Suggests: 
     knitr,
     rmarkdown,

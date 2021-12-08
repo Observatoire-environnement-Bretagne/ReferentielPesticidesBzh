@@ -4,7 +4,7 @@
 #'
 #' @param url char url de la fiche data.gouv.fr
 #'
-#' @import tidyverse
+#' @import magrittr
 #'
 #' @return
 #' tibble des métadonnées du jeu de données
@@ -29,5 +29,5 @@ colnames(metadonnee) <- page %>%
   rvest::html_text2()%>%make.names()
 }
 
-metadonnee%>%as.tibble()
+metadonnee%>%tibble::as.tibble()
 }

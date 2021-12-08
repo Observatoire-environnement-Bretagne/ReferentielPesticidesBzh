@@ -9,7 +9,8 @@ editor_options:
 
 ```{r development, include=FALSE}
 library(testthat)
-library(tidyverse)
+library(magrittr)
+library(dplyr)
 ```
 
 <!--
@@ -30,7 +31,7 @@ fusen::fill_description(
       person(given = "Observatoire de l'Environnement en Bretagne", role = "cph")
     )
   )
-, overwrite = TRUE)
+  )
 # Define License with use_*_license()
 usethis::use_mit_license("Timothée Besse")
 ```
@@ -63,7 +64,7 @@ pkgload::load_all(path = here::here(), export_all = FALSE)
 #'
 #' @param url char url de la fiche data.gouv.fr
 #'
-#' @import tidyverse
+#' @import magrittr
 #'
 #' @return
 #' tibble des métadonnées du jeu de données
@@ -87,7 +88,7 @@ colnames(metadonnee) <- page %>%
   rvest::html_text2()%>%make.names()
 }
 
-metadonnee%>%as.tibble()
+metadonnee%>%tibble::as.tibble()
 }
 ```
 
