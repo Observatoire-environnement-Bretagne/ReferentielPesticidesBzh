@@ -35,3 +35,4 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 referentiel_pesticides_bzh.Rproj
+inst/doc

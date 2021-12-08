@@ -1,0 +1,185 @@
+---
+title: "Référentiel des substances actives pesticides"
+output: html_notebook
+params:
+  agritox_url: 'https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/'
+  ephy_url: 'https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959'
+  siris_url: 'https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fsiris-pesticides.ineris.fr%2Fsiris_base_xls%2Fsiris_2012.xls&wdOrigin=BROWSELINK'
+  data_folder: '../data'
+---
+
+
+
+```{r setup}
+library(tidyverse)
+
+# Fonction de lecture des métadonnées du jeu de données depuis la page data.gouv
+metadonnees_dataset <- function(url){
+page <- rvest::read_html(url)
+
+if (grepl('data.gouv.fr/fr/datasets/', url, fixed = TRUE)){
+
+metadonnee <- page %>% 
+  rvest::html_elements(".ressources .description-list div dd")%>% 
+  rvest::html_text2()%>%t()
+
+colnames(metadonnee) <- page %>% 
+  rvest::html_elements(".ressources .description-list div dt") %>% 
+  rvest::html_text2()%>%make.names()
+}
+
+metadonnee%>%as.tibble()
+}
+
+# Fonction d'import d'un dataset à partir d'un fichier ZIP téléchargeable
+import_dataset <- function(url, name, format){
+  
+  url_dataset <- metadonnees_dataset(url)$URL.stable
+  
+  # URL stable du jeu de données Agritox
+  folder <- paste0(params$data_folder,"/",name)
+  file <- paste0(params$data_folder,"/",name,"/",name,".",format)
+  if (!dir.exists(folder)) {dir.create(folder)}
+  download.file(url_dataset, file, mode='wb')
+  # unzip
+  if(format == "zip"){
+    unzip(zipfile = file, exdir=folder)#%>%
+    #copy extracted file to destination directory
+    #file.copy(paste0(params$data_folder,"/",name), overwrite=TRUE)
+  }
+}
+
+# Fonction de lecture d'un dataset importé et dézippé dans son dossier data/nom_du_dataset
+load_dataset <- function(url, name, pattern = "*.csv"){
+  
+list <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = TRUE) %>%
+  purrr::map(~read.csv(.x, sep=";"))
+
+names(list) <- list.files(path = paste0(params$data_folder,'/',name,'/'), pattern=pattern, full.names = FALSE) %>%
+  str_remove(".csv")%>%
+  tolower()
+
+list$mise_a_jour<- metadonnees_dataset(url)%>%
+  select(Modifiée.le)%>% 
+  as.character() %>% 
+  as.Date("%d %B %Y")
+
+list%>%
+  return()
+}
+
+
+```
+## AGRITOX
+
+Fiche du catalogue : https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/
+
+URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664)
+
+```{r import agritox}
+import_dataset(url=params$agritox_url, name="agritox", format="zip")
+
+agritox <- load_dataset(url=params$agritox_url, name="agritox", pattern="*.csv")
+```
+
+## EPHY
+
+URL stable du jeu de données : (https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959)
+--> Remplacer par le jeu de données XML : (https://www.data.gouv.fr/fr/datasets/r/cdbc887b-265e-4338-9509-5e9958df1a48)
+
+- La liste des produits autorisés ou retirés avec leurs AMM et leurs types de classification. (Fichiers : produits_ … .csv)
+- La liste des usages des produits (hors MFSC). Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). Le tableau contient les produits autorisés et retirés. (Fichiers : produits_usages_ … .csv)
+- La liste des usages des produits (hors MFSC) autorisés. Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). Le tableau contient uniquement les produits autorisés, mais informe sur tous les usages autorisés ou retirés de ce produit. (Fichiers : usages_des_produits_autorises_ … .csv)
+- La liste des phrases de risque des produits. (Fichiers : produits_phrases_de_risque_ … .csv)
+- La liste des substances actives. (Fichiers : substance_active_ … .csv)
+- La liste des conditions d’emploi des produits. Il existe une ligne par conditions d’emploi et produit. Un même produit se retrouve donc sur plusieurs lignes (une par conditions d’emploi du produit). (Fichiers produits_condition_emploi_ … .csv)
+- La liste des classes et des mentions danger des produits (hors MFSC). Il existe une ligne par classes – mentions dangers et produit. Un même produit se retrouve donc sur plusieurs lignes. (Fichiers produits_classe_et_mention_danger_ … .csv)
+- La liste des usages des MFSC et produits mixtes. Il existe une ligne par usage et produit. Un même produit se retrouve donc sur plusieurs lignes (une par usage du produit). (Fichiers mfsc_et_mixte_usage_ … .csv)
+- La liste des compositions des MFSC et produits mixtes. (Fichiers mfsc_et_mixte_composition_ … .csv)
+
+```{r import EPHY}
+
+import_dataset(url=params$ephy_url, name="ephy", format="zip")
+
+ephy <- load_dataset(url=params$ephy_url, name="ephy", pattern="*_utf8.csv")
+
+```
+`r metadonnees_dataset(params$ephy_url)%>%select(Modifiée.le)%>%as.character()`
+
+## SIRIS
+
+```{r import siris}
+# Le téléchargement du fichier excel ne marche pas
+#import_dataset(url=params$siris_url, name="siris", format = "xls")
+
+siris <- readxl::read_xls(paste0(params$data_folder,"/siris/siris.xls"), skip=5)
+names(siris) <- make.names(names(siris))
+siris$mise_a_jour <- as.Date("31/06/2012")
+```
+
+# Formatage des jeux de données sur un schema commun
+
+## Substances actives
+
+```{r format_agritox}
+sa_agritox <- agritox$agritox_identite %>%
+  left_join(select(agritox$agritox_ecotoxicite, Numéro.CAS, Valeur.PNEC), by = c("N..CAS" = "Numéro.CAS")) %>%
+  as.tibble() %>% 
+  select(
+    SA_CodeCAS = N..CAS,
+    SA_Libelle = NOM.SA,
+    SA_PNEC = Valeur.PNEC
+  )%>%
+  mutate(source = "AGRITOX",
+         mise_a_jour = agritox$mise_a_jour)
+
+sa_agritox
+```
+
+```{r format_ephy}
+sa_ephy <- ephy$substance_active_v3_utf8 %>%
+  as.tibble() %>% 
+  select(
+    SA_CodeCAS = Numero.CAS,
+    SA_Libelle = Nom.substance.active,
+    SA_Statut = Etat.dâ..autorisation
+  )%>%
+  mutate(source = "EPHY",
+         mise_a_jour = ephy$mise_a_jour)
+
+sa_ephy
+```
+# Union des jeux de données
+
+## Substances actives
+
+```{r union_substances_actives}
+union_substances_actives <- sa_agritox %>%
+  bind_rows(sa_ephy)
+
+union_substances_actives
+```
+# Correction des données 
+
+```{r substances_actives_corrigees}
+union_substances_actives_corrigees <- union_substances_actives %>% 
+  mutate(SA_CodeCAS = case_when(SA_CodeCAS == "87392-12-9 (S-isomer) 178961-20-1 (R-isomer)" ~ "87392-12-9",
+                                TRUE ~ SA_CodeCAS))
+
+union_substances_actives_corrigees
+```
+
+```{r lecture union_substances_actives}
+union_substances_actives_corrigees %>% 
+  filter(SA_CodeCAS == "87392-12-9")
+# Le CodeCAS n'est pas unique par ligne du référentiel EPHY
+```
+
+# Export des référentiels
+
+```{r write_substances_actives}
+if (!dir.exists('data/referentiel')) {dir.create('data/referentiel')}
+
+write.csv(union_substances_actives_corrigees, file=paste(params$data_folder,'referentiel',"union_substances_actives.csv", sep="/"))
+```
+
