@@ -12,10 +12,10 @@ Description: Ce package permet d'actualiser et d'exploiter un référentiel
     Il inclut les corrections et compléments apportés par le groupe de
     travail régional animé par l'Observatoire de l'Environnement en
     Bretagne.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: MIT + file LICENSE
 Imports: 
-    rvest
+    rvest,
+    tidyverse
 Suggests: 
     knitr,
     rmarkdown,
