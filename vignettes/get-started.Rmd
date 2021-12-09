@@ -44,3 +44,33 @@ and `system.file()` to read it in your examples
 metadonnees_dataset('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
 ```
 
+```{r examples-import_dataset}
+# Téléchargement du dataset agritox
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664', name="agritox", format="zip")
+
+# Téléchargement du dataset ephy
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
+
+# Téléchargement du dataset ephy
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
+
+# Téléchargement du dataset "Description des substances actives phytosanitaires" de l'OEB
+import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb_referentiels_substances_actives", format="csv")
+
+# Les fichiers sont téléchargés dans les sous-dossiers du répertoire data/
+```
+
+```{r examples-load_dataset}
+
+agritox <- load_dataset(name="agritox", pattern="*.csv")
+
+ephy <- load_dataset(name="ephy", pattern="*_utf8.csv")
+
+oeb_referentiels_substances_actives <- load_dataset(name="oeb_referentiels_substances_actives", pattern="*.csv")
+
+# Adapter la fonction load_dataset au jeu de données Siris
+siris <- readxl::read_xls("extdata/siris/siris.xls", skip=5)
+names(siris) <- make.names(names(siris))
+
+```
+

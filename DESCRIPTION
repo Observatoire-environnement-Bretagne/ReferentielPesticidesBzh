@@ -15,10 +15,13 @@ Description: Ce package permet d'actualiser et d'exploiter un référentiel
 License: MIT + file LICENSE
 Imports: 
     magrittr,
+    purrr,
     rvest,
+    stringr,
     tibble
 Suggests: 
     knitr,
+    readxl,
     rmarkdown,
     testthat
 VignetteBuilder: 

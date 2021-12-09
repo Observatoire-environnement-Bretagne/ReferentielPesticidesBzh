@@ -46,14 +46,14 @@ and `system.file()` to read it in your examples
 ```{r development-2}
 # Run all in the console directly
 # Create "inst/" directory
-dir.create(here::here("inst"))
+dir.create(here::here("inst/extdata"))
 # Example dataset
-# file.copy(system.file("extdata/agritox.zip", package = "RefPesticidesBzh"), here::here("inst"))
+#file.copy("extdata/AGRITOX_IDENTITE.csv", here::here("inst/extdata"))
 # Make your dataset file available to the current Rmd
 pkgload::load_all(path = here::here(), export_all = FALSE)
 # You will be able to read your example data file in each of your function examples and tests as follows
-# datafile <- system.file("nyc_squirrels_sample.csv", package = "RefPesticidesBzh")
-# nyc_squirrels <- read.csv(datafile)
+# datafile <- system.file("AGRITOX_IDENTITE.csv", package = "RefPesticidesBzh")
+# agritox <- read.csv(datafile)
 ```
 
 # Lire les métadonnées du jeu de données à partir de la page data.gouv.fr
@@ -88,7 +88,7 @@ colnames(metadonnee) <- page %>%
   rvest::html_text2()%>%make.names()
 }
 
-metadonnee%>%tibble::as.tibble()
+metadonnee%>%tibble::as_tibble()
 }
 ```
 
@@ -96,11 +96,92 @@ metadonnee%>%tibble::as.tibble()
 metadonnees_dataset('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
 ```
 
-```{r tests-1}
-test_that("my_median works properly and show error if needed", {
-  expect_true(TRUE)
-  expect_error(mean(ert))
-})
+```{r function-import_dataset}
+#' Téléchargement et décompression du dataset depuis une url
+#'
+#' @param url char url stable du jeu de données
+#' @param name char nom du dataset
+#' @param format char format du fichier téléchargé (zip, xls, csv)
+#'
+#'
+#' @return
+#' Aucune reponse - Les fichiers sont téléchargés et dézippés dans le dossier extdata/
+#' @export
+#'
+#' @examples
+# Fonction d'import d'un dataset à partir d'un fichier téléchargeable
+
+import_dataset <- function(url, name, format){
+  
+  folder <- paste0("extdata/",name)
+  file <- paste0("extdata/",name,"/",name,".",format)
+  
+  if (!dir.exists(folder)) {dir.create(folder, recursive = TRUE)}
+  download.file(url, file, mode='wb')
+  
+  # unzip
+  if(format == "zip"){
+    unzip(zipfile = file, exdir=folder)
+  }
+}
+```
+
+```{r examples-import_dataset}
+# Téléchargement du dataset agritox
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664', name="agritox", format="zip")
+
+# Téléchargement du dataset ephy
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
+
+# Téléchargement du dataset ephy
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
+
+# Téléchargement du dataset "Description des substances actives phytosanitaires" de l'OEB
+import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb_referentiels_substances_actives", format="csv")
+
+# Les fichiers sont téléchargés dans les sous-dossiers du répertoire data/
+```
+
+```{r function-load_dataset}
+#' Lecture d'un dataset importé
+#'
+#' @param name char nom du dataset
+#' @param pattern char motif de sélection des fichiers à importer
+#'
+#'
+#' @return
+#' Liste contenant les tables lues dans chaque fichier correspondant au motif
+#' @export
+#'
+#' @examples
+# Fonction de lecture d'un dataset importé et dézippé dans son dossier data/nom_du_dataset
+
+load_dataset <- function(name, pattern = "*.csv"){
+  
+list <- list.files(path = paste0('extdata/',name,'/'), pattern=pattern, full.names = TRUE) %>%
+  purrr::map(~read.csv(.x, sep=";"))
+
+names(list) <- list.files(path = paste0('extdata/',name,'/'), pattern=pattern, full.names = FALSE) %>%
+  stringr::str_remove(".csv")%>%
+  tolower()
+
+list%>%
+  return()
+}
+```
+
+```{r examples-load_dataset}
+
+agritox <- load_dataset(name="agritox", pattern="*.csv")
+
+ephy <- load_dataset(name="ephy", pattern="*_utf8.csv")
+
+oeb_referentiels_substances_actives <- load_dataset(name="oeb_referentiels_substances_actives", pattern="*.csv")
+
+# Adapter la fonction load_dataset au jeu de données Siris
+siris <- readxl::read_xls("extdata/siris/siris.xls", skip=5)
+names(siris) <- make.names(names(siris))
+
 ```
 
 ```{r development-1, eval=FALSE}
