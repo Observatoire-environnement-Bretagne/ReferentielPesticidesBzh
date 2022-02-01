@@ -45,14 +45,22 @@ and `system.file()` to read it in your examples
 
 ```{r development-2}
 # Run all in the console directly
-# Create "inst/" directory
-dir.create(here::here("inst/extdata"))
+
+# Create "inst/" directory (raw dataset accessible for the user)
+dir.create(here::here("inst"))
+
+## AJOUTER Le code pour le premier import des jeux de données
+
+# Create "inst/" directory (raw dataset NOT accessible for the user)
+usethis::use_data_raw()
+
 # Example dataset
-#file.copy("extdata/AGRITOX_IDENTITE.csv", here::here("inst/extdata"))
+
 # Make your dataset file available to the current Rmd
 pkgload::load_all(path = here::here(), export_all = FALSE)
+
 # You will be able to read your example data file in each of your function examples and tests as follows
-# datafile <- system.file("AGRITOX_IDENTITE.csv", package = "RefPesticidesBzh")
+# datafile <- system.file("extdata/AGRITOX_IDENTITE.csv", package = "RefPesticidesBzh")
 # agritox <- read.csv(datafile)
 ```
 
@@ -113,8 +121,8 @@ metadonnees_dataset('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agrito
 
 import_dataset <- function(url, name, format){
   
-  folder <- paste0("extdata/",name)
-  file <- paste0("extdata/",name,"/",name,".",format)
+  folder <- paste0(name)
+  file <- paste0(name,"/",name,".",format)
   
   if (!dir.exists(folder)) {dir.create(folder, recursive = TRUE)}
   download.file(url, file, mode='wb')
@@ -128,26 +136,23 @@ import_dataset <- function(url, name, format){
 
 ```{r examples-import_dataset}
 # Téléchargement du dataset agritox
-import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664', name="agritox", format="zip")
-
-# Téléchargement du dataset ephy
-import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
+import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/ce799eee-2cc4-4406-b4b4-318ea35cd5e8', name="agritox", format="zip")
 
 # Téléchargement du dataset ephy
 import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
 
 # Téléchargement du dataset "Description des substances actives phytosanitaires" de l'OEB
-import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb_referentiels_substances_actives", format="csv")
+import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb", format="csv")
 
-# Les fichiers sont téléchargés dans les sous-dossiers du répertoire data/
+# Les fichiers sont téléchargés dans les sous-dossiers du répertoire de travail
 ```
 
 ```{r function-load_dataset}
 #' Lecture d'un dataset importé
 #'
-#' @param name char nom du dataset
-#' @param pattern char motif de sélection des fichiers à importer
-#'
+#' @param path char chemin vers le répertoire des fichiers à charger
+#' @param pattern char motif de sélection des fichiers
+#' @param encoding char encodage des fichiers
 #'
 #' @return
 #' Liste contenant les tables lues dans chaque fichier correspondant au motif
@@ -156,12 +161,12 @@ import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/dow
 #' @examples
 # Fonction de lecture d'un dataset importé et dézippé dans son dossier data/nom_du_dataset
 
-load_dataset <- function(name, pattern = "*.csv"){
+load_dataset <- function(path, pattern = "*.csv", encoding = "UTF-8"){
   
-list <- list.files(path = paste0('extdata/',name,'/'), pattern=pattern, full.names = TRUE) %>%
-  purrr::map(~read.csv(.x, sep=";"))
+list <- list.files(path = path, pattern=pattern, full.names = TRUE) %>%
+  purrr::map(~read.csv(.x, sep=";", encoding = encoding))
 
-names(list) <- list.files(path = paste0('extdata/',name,'/'), pattern=pattern, full.names = FALSE) %>%
+names(list) <- list.files(path = path, pattern=pattern, full.names = FALSE) %>%
   stringr::str_remove(".csv")%>%
   tolower()
 
@@ -172,16 +177,78 @@ list%>%
 
 ```{r examples-load_dataset}
 
-agritox <- load_dataset(name="agritox", pattern="*.csv")
+agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
+agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "UTF-8")
 
-ephy <- load_dataset(name="ephy", pattern="*_utf8.csv")
+```
 
-oeb_referentiels_substances_actives <- load_dataset(name="oeb_referentiels_substances_actives", pattern="*.csv")
+```{r function-format_agritox}
+#' Formatage du dataset AGRITOX en une table d'attributs par SA
+#'
+#' @param x dataframe jeu de données à formater
+#' @param source_name char Nom de la source à afficher
+#' @param modified_date date Nom de la source à afficher
+#'
+#' @return
+#' tibble
+#' @export
+#'
+#' @examples
+# Fonction de formatage du dataset AGRITOX
 
-# Adapter la fonction load_dataset au jeu de données Siris
-siris <- readxl::read_xls("extdata/siris/siris.xls", skip=5)
-names(siris) <- make.names(names(siris))
+format_agritox <- function(x, source_name, modified_date){
+x$agritox_identite %>%
+  left_join(select(x$agritox_ecotoxicite, `Numéro.CAS`, `Valeur.PNEC`), by = c("N..CAS" = "Numéro.CAS")) %>%
+  as.tibble() %>% 
+  select(
+    SA_CodeCAS = N..CAS,
+    SA_Libelle = NOM.SA,
+    SA_PNEC = Valeur.PNEC
+  )%>%
+  mutate(source = source_name,
+         mise_a_jour = modified_date)
+}
 
+```
+
+
+```{r examples-format_agritox}
+# Lecture du dataset AGRITOX
+agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
+agritox <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "Latin-1")
+
+# Ajout de la date de mise à jour à partir de la fiche Data.gouv
+agritox$mise_a_jour <- RefPesticidesBzh::metadonnees_dataset('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')$`Modifiée.le` %>% as.Date("%d %b %Y")
+
+# Mise en forme de la liste des SA avec les attributs retenus pour cette source
+agritox_sa <- agritox %>% format_agritox(source_name = "AGRITOX", modified_date = agritox$mise_a_jour)
+
+```
+
+```{r dev-import_sandre}
+
+url_sandre_groupesparametres <- 'https://api.sandre.eaufrance.fr/referentiels/v1/gpr.json?outputSchema=SANDREv4&compress=false'
+
+sandre_groupesparametres_json <- fromJSON(url(url_sandre_groupesparametres))
+
+sandre_groupesparametres_json$REFERENTIELS$Referentiel$GroupeParametres%>%
+  filter(CdGroupeParametres == "95")%>%pluck("GroupeParametresPere")
+
+url_sandre_parametres <- 'https://api.sandre.eaufrance.fr/referentiels/v1/par.json?outputSchema=SANDREv4&compress=false'
+
+# read url and convert to data.frame
+sandre_parametres_json <- fromJSON(url(url_sandre_parametres))
+
+sandre_parametres_json$REFERENTIELS$Referentiel$Parametre %>%
+  filter(CdParametre == "2556")%>%
+   filter(map_lgl(GroupeParametres, ~.x %>% tibble() %>% pluck(1) %>% length > 0 ) )
+
+sandre_json$REFERENTIELS$Referentiel$Parametre %>%
+  mutate(Pesticide = ~.GroupeParametre)
+
+sandre_json$REFERENTIELS$Referentiel$Parametre$GroupeParametres[[1]] %>% pluck(1)
+
+### A COMPLETER
 ```
 
 ```{r development-1, eval=FALSE}

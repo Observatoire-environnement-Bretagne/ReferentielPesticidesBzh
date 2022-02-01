@@ -15,22 +15,19 @@
 # Fonction d'import d'un dataset à partir d'un fichier téléchargeable
 
 #' # Téléchargement du dataset agritox
-#' import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98dbe26f-a2e4-4002-a598-c226bf6af664', name="agritox", format="zip")
-#' 
-#' # Téléchargement du dataset ephy
-#' import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
+#' import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/ce799eee-2cc4-4406-b4b4-318ea35cd5e8', name="agritox", format="zip")
 #' 
 #' # Téléchargement du dataset ephy
 #' import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
 #' 
 #' # Téléchargement du dataset "Description des substances actives phytosanitaires" de l'OEB
-#' import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb_referentiels_substances_actives", format="csv")
+#' import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb", format="csv")
 #' 
-#' # Les fichiers sont téléchargés dans les sous-dossiers du répertoire data/
+#' # Les fichiers sont téléchargés dans les sous-dossiers du répertoire de travail
 import_dataset <- function(url, name, format){
   
-  folder <- paste0("extdata/",name)
-  file <- paste0("extdata/",name,"/",name,".",format)
+  folder <- paste0(name)
+  file <- paste0(name,"/",name,".",format)
   
   if (!dir.exists(folder)) {dir.create(folder, recursive = TRUE)}
   download.file(url, file, mode='wb')
@@ -43,9 +40,9 @@ import_dataset <- function(url, name, format){
 
 #' Lecture d'un dataset importé
 #'
-#' @param name char nom du dataset
-#' @param pattern char motif de sélection des fichiers à importer
-#'
+#' @param path char chemin vers le répertoire des fichiers à charger
+#' @param pattern char motif de sélection des fichiers
+#' @param encoding char encodage des fichiers
 #'
 #' @return
 #' Liste contenant les tables lues dans chaque fichier correspondant au motif
@@ -55,22 +52,15 @@ import_dataset <- function(url, name, format){
 # Fonction de lecture d'un dataset importé et dézippé dans son dossier data/nom_du_dataset
 
 #' 
-#' agritox <- load_dataset(name="agritox", pattern="*.csv")
+#' agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
+#' agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "UTF-8")
 #' 
-#' ephy <- load_dataset(name="ephy", pattern="*_utf8.csv")
-#' 
-#' oeb_referentiels_substances_actives <- load_dataset(name="oeb_referentiels_substances_actives", pattern="*.csv")
-#' 
-#' # Adapter la fonction load_dataset au jeu de données Siris
-#' siris <- readxl::read_xls("extdata/siris/siris.xls", skip=5)
-#' names(siris) <- make.names(names(siris))
-#' 
-load_dataset <- function(name, pattern = "*.csv"){
+load_dataset <- function(path, pattern = "*.csv", encoding = "UTF-8"){
   
-list <- list.files(path = paste0('extdata/',name,'/'), pattern=pattern, full.names = TRUE) %>%
-  purrr::map(~read.csv(.x, sep=";"))
+list <- list.files(path = path, pattern=pattern, full.names = TRUE) %>%
+  purrr::map(~read.csv(.x, sep=";", encoding = encoding))
 
-names(list) <- list.files(path = paste0('extdata/',name,'/'), pattern=pattern, full.names = FALSE) %>%
+names(list) <- list.files(path = path, pattern=pattern, full.names = FALSE) %>%
   stringr::str_remove(".csv")%>%
   tolower()
 
