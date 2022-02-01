@@ -20,8 +20,10 @@ Imports:
     purrr,
     rvest,
     stringr,
-    tibble
+    tibble,
+    utils
 Suggests: 
+    dplyr,
     knitr,
     rmarkdown,
     testthat

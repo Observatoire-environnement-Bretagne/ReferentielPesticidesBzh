@@ -33,7 +33,7 @@ import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/ce799eee-2cc4-4406-b4
 import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
 
 # Téléchargement du dataset "Description des substances actives phytosanitaires" de l'OEB
-import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb", format="csv")
+import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb_referentiels_substances_actives", format="csv")
 
 # Les fichiers sont téléchargés dans les sous-dossiers du répertoire de travail
 # Téléchargement du dataset agritox

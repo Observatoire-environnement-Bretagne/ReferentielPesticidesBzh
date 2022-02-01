@@ -26,7 +26,7 @@
 format_agritox <- function(x, source_name, modified_date){
 x$agritox_identite %>%
   left_join(select(x$agritox_ecotoxicite, `Numéro.CAS`, `Valeur.PNEC`), by = c("N..CAS" = "Numéro.CAS")) %>%
-  as.tibble() %>% 
+  tibble::as_tibble() %>% 
   select(
     SA_CodeCAS = N..CAS,
     SA_Libelle = NOM.SA,
@@ -58,7 +58,7 @@ x$agritox_identite %>%
 #' import_dataset(url='https://www.data.gouv.fr/fr/datasets/r/98f7cac6-6b29-4859-8739-51b825196959', name="ephy", format="zip")
 #' 
 #' # Téléchargement du dataset "Description des substances actives phytosanitaires" de l'OEB
-#' import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb", format="csv")
+#' import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/download/25084/384395/file/oeb_referentiels_substances_actives.csv', name="oeb_referentiels_substances_actives", format="csv")
 #' 
 #' # Les fichiers sont téléchargés dans les sous-dossiers du répertoire de travail
 import_dataset <- function(url, name, format){
@@ -67,11 +67,11 @@ import_dataset <- function(url, name, format){
   file <- paste0(name,"/",name,".",format)
   
   if (!dir.exists(folder)) {dir.create(folder, recursive = TRUE)}
-  download.file(url, file, mode='wb')
+  utils::download.file(url, file, mode='wb')
   
   # unzip
   if(format == "zip"){
-    unzip(zipfile = file, exdir=folder)
+    utils::unzip(zipfile = file, exdir=folder)
   }
 }
 
@@ -103,36 +103,4 @@ names(list) <- list.files(path = path, pattern=pattern, full.names = FALSE) %>%
 
 list%>%
   return()
-}
-
-#' Metadonnées du dataset
-#'
-#' @param url char url de la fiche data.gouv.fr
-#'
-#' @import magrittr
-#'
-#' @return
-#' tibble des métadonnées du jeu de données
-#' @export
-#'
-#' @examples
-# Fonction de lecture des métadonnées du jeu de données depuis la page data.gouv.fr
-
-#' metadonnees_dataset('https://www.data.gouv.fr/fr/datasets/base-de-donnees-agritox/')
-metadonnees_dataset <- function(url){
-
-  page <- rvest::read_html(url)
-
-if (grepl('data.gouv.fr/fr/datasets/', url, fixed = TRUE)){
-
-metadonnee <- page %>% 
-  rvest::html_elements(".ressources .description-list div dd")%>% 
-  rvest::html_text2()%>%t()
-
-colnames(metadonnee) <- page %>% 
-  rvest::html_elements(".ressources .description-list div dt") %>% 
-  rvest::html_text2()%>%make.names()
-}
-
-metadonnee%>%tibble::as_tibble()
 }
