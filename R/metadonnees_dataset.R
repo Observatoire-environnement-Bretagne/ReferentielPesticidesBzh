@@ -29,5 +29,5 @@ colnames(metadonnee) <- page %>%
   rvest::html_text2()%>%make.names()
 }
 
-metadonnee%>%tibble::as.tibble()
+metadonnee%>%tibble::as_tibble()
 }
