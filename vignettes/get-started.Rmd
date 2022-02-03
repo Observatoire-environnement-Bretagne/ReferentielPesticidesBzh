@@ -48,6 +48,7 @@ Les tables des jeux de données sources sont inclus dans le package :
 - EPHY : ephy/*.csv
 - OEB : oeb_referentiels_substances_actives/oeb_referentiels_substances_actives.csv
 - SIRIS : siris/siris.xls
+- ECHA : reg-substances-export.csv
 
 
 # Actualiser les jeux de données sources
@@ -76,11 +77,13 @@ import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/dow
 ```{r examples-load_dataset}
 
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
-agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "UTF-8")
+agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path)
 
 ```
 
 ```{r examples-format_agritox}
+library(magrittr)
+
 # Lecture du dataset AGRITOX
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
 agritox <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "Latin-1")

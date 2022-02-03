@@ -54,6 +54,7 @@ Les tables des jeux de données sources sont inclus dans le package :
 - EPHY : ephy/*.csv
 - OEB : oeb_referentiels_substances_actives/oeb_referentiels_substances_actives.csv
 - SIRIS : siris/siris.xls
+- ECHA : reg-substances-export.csv
 
 ```{r development-2}
 # Run all in the console directly
@@ -66,6 +67,7 @@ dir.create(here::here("inst"))
 # Create "inst/" directory (raw dataset NOT accessible for the user)
 usethis::use_data_raw()
 usethis::use_r("substances_actives")
+usethis::use_r("referentiels")
 
 # Example dataset
 
@@ -179,10 +181,10 @@ import_dataset(url='http://gide.bretagne-environnement.org/index.php/content/dow
 
 load_dataset <- function(path, pattern = "*.csv", encoding = "UTF-8"){
   
-list <- list.files(path = path, pattern=pattern, full.names = TRUE) %>%
-  purrr::map(~read.csv(.x, sep=";", encoding = encoding))
+list <- list.files(path, pattern, full.names = TRUE) %>%
+  purrr::map(~read.csv(.x, encoding))
 
-names(list) <- list.files(path = path, pattern=pattern, full.names = FALSE) %>%
+names(list) <- list.files(path, pattern, full.names = FALSE) %>%
   stringr::str_remove(".csv")%>%
   tolower()
 
@@ -194,7 +196,7 @@ list%>%
 ```{r examples-load_dataset}
 
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
-agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "UTF-8")
+agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path)
 
 ```
 
@@ -229,6 +231,8 @@ x$agritox_identite %>%
 
 
 ```{r examples-format_agritox}
+library(magrittr)
+
 # Lecture du dataset AGRITOX
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
 agritox <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "Latin-1")

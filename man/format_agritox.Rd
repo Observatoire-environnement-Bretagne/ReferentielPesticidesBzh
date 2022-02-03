@@ -20,6 +20,8 @@ tibble
 Formatage du dataset AGRITOX en une table d'attributs par SA
 }
 \examples{
+library(magrittr)
+
 # Lecture du dataset AGRITOX
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
 agritox <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "Latin-1")

@@ -28,7 +28,7 @@ Lecture d'un dataset importé
 \examples{
 
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
-agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "UTF-8")
+agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path)
 
 
 agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")

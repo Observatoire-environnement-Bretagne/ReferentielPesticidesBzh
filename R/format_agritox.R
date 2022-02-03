@@ -13,6 +13,8 @@
 #' @examples
 # Fonction de formatage du dataset AGRITOX
 
+#' library(magrittr)
+#' 
 #' # Lecture du dataset AGRITOX
 #' agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
 #' agritox <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "Latin-1")
@@ -90,14 +92,14 @@ import_dataset <- function(url, name, format){
 
 #' 
 #' agritox_path <- system.file("agritox/", package = "RefPesticidesBzh")
-#' agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path, pattern="*.csv", encoding = "UTF-8")
+#' agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path)
 #' 
 load_dataset <- function(path, pattern = "*.csv", encoding = "UTF-8"){
   
-list <- list.files(path = path, pattern=pattern, full.names = TRUE) %>%
-  purrr::map(~read.csv(.x, sep=";", encoding = encoding))
+list <- list.files(path, pattern, full.names = TRUE) %>%
+  purrr::map(~read.csv(.x, encoding))
 
-names(list) <- list.files(path = path, pattern=pattern, full.names = FALSE) %>%
+names(list) <- list.files(path, pattern, full.names = FALSE) %>%
   stringr::str_remove(".csv")%>%
   tolower()
 
