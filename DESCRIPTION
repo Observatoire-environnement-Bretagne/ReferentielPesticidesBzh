@@ -16,6 +16,7 @@ License: MIT + file LICENSE
 Depends: 
     R (>= 2.10)
 Imports: 
+    dplyr,
     magrittr,
     purrr,
     rvest,
@@ -23,7 +24,6 @@ Imports:
     tibble,
     utils
 Suggests: 
-    dplyr,
     knitr,
     rmarkdown,
     testthat

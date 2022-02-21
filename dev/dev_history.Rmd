@@ -216,14 +216,14 @@ agritox_raw <- RefPesticidesBzh::load_dataset(path=agritox_path)
 
 format_agritox <- function(x, source_name, modified_date){
 x$agritox_identite %>%
-  left_join(select(x$agritox_ecotoxicite, `Numéro.CAS`, `Valeur.PNEC`), by = c("N..CAS" = "Numéro.CAS")) %>%
+  dplyr::left_join(select(x$agritox_ecotoxicite, `Numéro.CAS`, `Valeur.PNEC`), by = c("N..CAS" = "Numéro.CAS")) %>%
   tibble::as_tibble() %>% 
-  select(
+  dplyr::select(
     SA_CodeCAS = N..CAS,
     SA_Libelle = NOM.SA,
     SA_PNEC = Valeur.PNEC
   )%>%
-  mutate(source = source_name,
+  dplyr::mutate(source = source_name,
          mise_a_jour = modified_date)
 }
 
